@@ -18,7 +18,7 @@ gem "filepress"
 Then run:
 
 ```bash
-bundle install`
+bundle install
 ```
 
 2. Create a model to represent your content
