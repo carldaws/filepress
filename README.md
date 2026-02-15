@@ -15,11 +15,6 @@ Add it to your Gemfile:
 ```ruby
 gem "filepress"
 ```
-Then run:
-
-```bash
-bundle install
-```
 
 2. Create a model to represent your content
 
@@ -35,80 +30,78 @@ Use the `filepress` method in your model class:
 
 ```ruby
 class Post < ApplicationRecord
-    filepress
+  filepress
 end
 ```
 
 4. Add some content
 
-Create Markdown files in `app/content/posts`. Each file should include frontmatter:
+Create Markdown files in `app/content/posts`. The filename becomes the slug, and YAML frontmatter maps to your model's attributes:
 
 ```markdown
 ---
 title: My First Post
-slug: first
+published: true
 ---
 
-# Hello, this is my first post
+Hello, this is my first post!
 ```
 
-5. Sync your content
+That's it! Filepress syncs your content to the database automatically — on boot, on deploy, and whenever files change in development. No rake tasks, no deploy hooks.
 
-Run the sync task to import your files into the database:
-
-```bash
-bin/rails filepress:sync
-```
-
-That’s it! You’re now free to query your content via ActiveRecord like any other model. Filepress doesn't dictate how you render the body—use a Markdown parser like Kramdown, Redcarpet, or similar.
+You're free to query your content via ActiveRecord like any other model. Filepress doesn't dictate how you render the body — use a Markdown parser like Kramdown, Redcarpet, or similar.
 
 ## How it works
 
 Filepress reads your content files, extracts YAML frontmatter, and uses the values to populate or update model attributes. The rest of the file becomes the value of the body attribute (or another field, if configured).
 
+- Syncs are wrapped in a transaction — if any file fails, nothing changes
+- Unknown frontmatter keys (that don't match a column) are silently ignored
+- In development, Rails' built-in file watcher picks up live edits without a server restart
+
 ## Configuration
 
 You can customize how Filepress behaves by passing options to `filepress`:
 
-### `from:` - Set a custom content directory
+### `from:` — Set a custom content directory
 
 ```ruby
-class Post
-    filepress from: "app/my_custom_content_folder"
+class Post < ApplicationRecord
+  filepress from: "app/my_custom_content_folder"
 end
 ```
 
-### `glob:` - Use filetypes besides Markdown
+### `extensions:` — Use filetypes besides Markdown
 
 ```ruby
-class Post
-    filepress glob: "*.html"
+class Post < ApplicationRecord
+  filepress extensions: ["html", "txt"]
 end
 ```
 
-### `key:` - Use a unique identifier other than `slug`
+### `key:` — Use a unique identifier other than `slug`
 
 ```ruby
-class Post
-    filepress key: :name
+class Post < ApplicationRecord
+  filepress key: :name
 end
 ```
 
-### `body:` - Set which attribute stores the main content
+### `body:` — Set which attribute stores the main content
 
 ```ruby
-class Post
-    filepress body: :content
+class Post < ApplicationRecord
+  filepress body: :content
 end
 ```
 
-### `destroy_stale:` - Prevent deletion of records when files are removed
+### `destroy_stale:` — Prevent deletion of records when files are removed
 
-By default, Filepress deletes records when the corresponding file is removed. Disable this behavior with:
+By default, Filepress deletes records when the corresponding file is removed. Disable this behaviour with:
 
 ```ruby
-class Post
-    filepress destroy_stale: false
+class Post < ApplicationRecord
+  filepress destroy_stale: false
 end
 ```
 
@@ -119,4 +112,3 @@ Filepress is for you if:
 - You prefer writing content in files
 - You want the convenience of version control for content
 - And you still want powerful querying, associations, validations and all the other Rails goodness
-
