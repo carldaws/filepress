@@ -13,7 +13,14 @@ module Filepress
     def register(model_class, options)
       config = options.merge(model_class: model_class)
       registry[model_class.name] = config
-      Sync.new(config).perform
+
+      trace = TracePoint.new(:end) do |tp|
+        if tp.self == model_class
+          trace.disable
+          Sync.new(config).perform
+        end
+      end
+      trace.enable
     end
 
     def watched_extensions

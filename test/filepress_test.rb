@@ -1,36 +1,7 @@
 require "test_helper"
 
 class FilepressTest < ActiveSupport::TestCase
-  def setup
-    super
-    FileUtils.mkdir_p(Rails.root.join("app/content/posts"))
-
-    File.write(Rails.root.join("app/content/posts/hello-world.md"), <<~MD)
-      ---
-      title: Hello World
-      published: true
-      ---
-      This is the post body.
-    MD
-
-    File.write(Rails.root.join("app/content/posts/draft.md"), <<~MD)
-      ---
-      title: Draft Post
-      published: false
-      ---
-      Still working on this.
-    MD
-
-    Post.filepress
-  end
-
-  def teardown
-    FileUtils.rm_rf(Rails.root.join("app/content/posts"))
-    Post.delete_all
-    super
-  end
-
-  test "syncs records on register" do
+  test "syncs records from content files" do
     assert_equal 2, Post.count
   end
 
@@ -72,17 +43,22 @@ class FilepressTest < ActiveSupport::TestCase
   end
 
   test "respects destroy_stale: false" do
-    Filepress.registry.clear
-    Post.filepress(destroy_stale: false)
+    original = Filepress.registry["Post"]
+    Filepress.registry["Post"] = original.merge(destroy_stale: false)
+
     Post.create!(slug: "keep-me", title: "Keep", body: "Keep this")
 
     Filepress.sync
 
     assert Post.exists?(slug: "keep-me")
+  ensure
+    Filepress.registry["Post"] = original
   end
 
   test "ignores unknown frontmatter keys" do
-    File.write(Rails.root.join("app/content/posts/unknown.md"), <<~MD)
+    path = Rails.root.join("app/content/posts/unknown.md")
+
+    File.write(path, <<~MD)
       ---
       title: Test
       nonexistent_column: value
@@ -94,14 +70,20 @@ class FilepressTest < ActiveSupport::TestCase
 
     post = Post.find_by(slug: "unknown")
     assert_equal "Test", post.title
+  ensure
+    FileUtils.rm_f(path)
   end
 
   test "handles files with no frontmatter" do
-    File.write(Rails.root.join("app/content/posts/bare.md"), "Just a body.")
+    path = Rails.root.join("app/content/posts/bare.md")
+
+    File.write(path, "Just a body.")
 
     Filepress.sync
 
     post = Post.find_by(slug: "bare")
     assert_equal "Just a body.", post.body
+  ensure
+    FileUtils.rm_f(path)
   end
 end
