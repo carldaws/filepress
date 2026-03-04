@@ -74,6 +74,18 @@ class FilepressTest < ActiveSupport::TestCase
     FileUtils.rm_f(path)
   end
 
+  test "registers a reloader for custom content paths" do
+    custom_path = Rails.root.join("tmp/custom_content").to_s
+    FileUtils.mkdir_p(custom_path)
+
+    count = Rails.application.reloaders.size
+    Filepress.watch(custom_path, ["md"])
+
+    assert_equal count + 1, Rails.application.reloaders.size
+  ensure
+    FileUtils.rm_rf(custom_path)
+  end
+
   test "handles files with no frontmatter" do
     path = Rails.root.join("app/content/posts/bare.md")
 

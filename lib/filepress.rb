@@ -6,6 +6,8 @@ require "filepress/sync"
 
 module Filepress
   class << self
+    attr_accessor :app
+
     def registry
       @registry ||= {}
     end
@@ -13,6 +15,8 @@ module Filepress
     def register(model_class, options)
       config = options.merge(model_class: model_class)
       registry[model_class.name] = config
+
+      watch(config[:from], config[:extensions])
 
       trace = TracePoint.new(:end) do |tp|
         if tp.self == model_class
@@ -23,15 +27,22 @@ module Filepress
       trace.enable
     end
 
-    def watched_extensions
-      exts = registry.values.flat_map { |config| config[:extensions] }.uniq
-      exts.empty? ? ["md"] : exts
+    def watch(dir, extensions)
+      return unless watched.add?(dir)
+
+      app.reloaders << app.config.file_watcher.new([], { dir => extensions }) { sync }
     end
 
     def sync
       registry.each_value do |config|
         Sync.new(config).perform
       end
+    end
+
+    private
+
+    def watched
+      @watched ||= Set.new
     end
   end
 end

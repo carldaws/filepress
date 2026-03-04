@@ -7,16 +7,7 @@ module Filepress
     end
 
     initializer "filepress.file_watcher" do |app|
-      content_path = app.root.join("app", "content")
-
-      app.config.after_initialize do
-        if content_path.exist?
-          extensions = Filepress.watched_extensions
-          app.reloaders << app.config.file_watcher.new([], { content_path.to_s => extensions }) do
-            Filepress.sync
-          end
-        end
-      end
+      Filepress.app = app
     end
   end
 end
