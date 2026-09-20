@@ -126,6 +126,12 @@ Filepress reads your content files, extracts YAML frontmatter, and uses the valu
 - Unknown frontmatter keys (that don't match a column) are silently ignored
 - In development, Rails' built-in file watcher picks up live edits without a server restart
 
+Syncing happens when a model class loads. If your app eager loads before the schema exists — a fresh CI database, a first deploy against an empty database — that first sync is skipped. Run it yourself once the schema is ready:
+
+```bash
+bin/rails filepress:sync
+```
+
 ## Configuration
 
 Customise Filepress by passing options to `filepress`:
