@@ -5,4 +5,5 @@ ActiveRecord::Migrator.migrations_paths = [File.expand_path("../test/dummy/db/mi
 require "rails/test_help"
 
 Rails.application.eager_load!
+Filepress.sync
 
