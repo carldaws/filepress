@@ -9,5 +9,9 @@ module Filepress
     initializer "filepress.file_watcher" do |app|
       Filepress.app = app
     end
+
+    rake_tasks do
+      load "tasks/filepress.rake"
+    end
   end
 end
