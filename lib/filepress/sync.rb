@@ -37,8 +37,11 @@ module Filepress
     private
 
     def table_exists?
-      @model_class.connection_pool.with_connection do
-        @model_class.table_exists?
+      @model_class.connection_pool.with_connection do |connection|
+        next false unless connection.data_source_exists?(@model_class.table_name)
+
+        @model_class.reset_column_information
+        true
       end
     rescue ActiveRecord::NoDatabaseError, ActiveRecord::StatementInvalid
       false
